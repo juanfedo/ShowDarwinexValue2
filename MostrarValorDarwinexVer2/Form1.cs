@@ -23,11 +23,18 @@ namespace MostrarValorDarwinexVer2
         {
             using var httpClient = new HttpClient();
             var url = $"https://www.darwinex.com/api/productquotes/quotes/name?productName={darwinX}";
-            var response = await httpClient.GetAsync(url);
-            var responseContent = await response.Content.ReadAsStringAsync();
-            var jsonString = responseContent.Replace("[", "").Replace("]", "");
-            var responseObject = JsonSerializer.Deserialize<ApiResponse>(jsonString);
-            return responseObject;
+            try
+            {
+                var response = await httpClient.GetAsync(url);
+                var responseContent = await response.Content.ReadAsStringAsync();
+                var jsonString = responseContent.Replace("[", "").Replace("]", "");
+                var responseObject = JsonSerializer.Deserialize<ApiResponse>(jsonString);
+                return responseObject;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         void MostrarNotificacion(string darwinX, string limiteSuperior, string valorActual)
@@ -58,20 +65,20 @@ namespace MostrarValorDarwinexVer2
             darwinX = textBox2.Text.Trim();
             limiteSuperior = textBox1.Text.Trim();
             intervalo = textBox3.Text.Trim();
-
-            //this.Hide();
             notifyIcon1.Visible = true;
 
             while (true)
             {
                 var respuesta = await ObtenerTasaDeCambio(darwinX);
-                var spreadActual = respuesta?.spread;
-                var valorActual = respuesta?.value;
+                if (respuesta != null)
+                {
+                    var valorActual = respuesta?.value;
 
-                if (float.Parse(valorActual, CultureInfo.InvariantCulture.NumberFormat) > float.Parse(limiteSuperior, CultureInfo.InvariantCulture.NumberFormat))
-                    MostrarNotificacion(darwinX, limiteSuperior, valorActual);
+                    if (float.Parse(valorActual, CultureInfo.InvariantCulture.NumberFormat) > float.Parse(limiteSuperior, CultureInfo.InvariantCulture.NumberFormat))
+                        MostrarNotificacion(darwinX, limiteSuperior, valorActual);
 
-                Thread.Sleep(int.Parse(intervalo));
+                    Thread.Sleep(int.Parse(intervalo));
+                }
             }
         }
 
